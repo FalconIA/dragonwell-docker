@@ -16,7 +16,7 @@ set -o pipefail
 
 export root_dir="$PWD"
 push_cmdfile=${root_dir}/push_commands.sh
-target_repo="adoptopenjdk/openjdk"
+target_repo="falconia/openjdk"
 version="9"
 
 # shellcheck source=common_functions.sh
@@ -56,10 +56,10 @@ function get_image_build_time() {
 function check_adopt_image_available() {
 	local tag=$1
 
-	echo "INFO: Checking when the adopt docker image ${tag} was built ..."
+	echo "INFO: Checking when the docker image ${tag} was built ..."
 	if ! docker pull "${tag}" &>/dev/null; then
 		# Adopt image not available currently, build needed
-		echo "INFO: AdoptOpenJDK docker image for ${tag} does not exist. Docker build needed"
+		echo "INFO: Docker image for ${tag} does not exist. Docker build needed"
 		build_needed=1
 		return;
 	fi
@@ -271,6 +271,8 @@ function build_dockerfile {
 	# The target repo is different for different VMs
 	if [ "${vm}" == "hotspot" ]; then
 		trepo=${target_repo}${version}
+	elif [ "${vm}" == "dragonwell" ]; then
+		trepo=${target_repo//openjdk/}${vm}${version}
 	else
 		trepo=${target_repo}${version}-${vm}
 	fi

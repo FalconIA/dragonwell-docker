@@ -151,7 +151,7 @@ pipeline {
 def dockerBuild(version) {
     // dockerhub is the ID of the credentials stored in Jenkins
     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-        git poll: false, url: 'https://github.com/AdoptOpenJDK/openjdk-docker.git'
+        git poll: false, url: 'https://github.com/FalconIA/dragonwell-docker.git'
         if (version){
             sh label: '', script: "./build_all.sh ${version}"
         } else {
@@ -163,7 +163,7 @@ def dockerBuild(version) {
 def dockerManifest(version) {
     // dockerhub is the ID of the credentials stored in Jenkins
     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-        git poll: false, url: 'https://github.com/AdoptOpenJDK/openjdk-docker.git'
+        git poll: false, url: 'https://github.com/FalconIA/dragonwell-docker.git'
         sh label: '', script: "./update_manifest_all.sh ${version}"
     }
 }

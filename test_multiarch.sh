@@ -15,7 +15,7 @@
 set -o pipefail
 
 export root_dir="$PWD"
-source_prefix="adoptopenjdk"
+source_prefix="falconia"
 source_repo="openjdk"
 version="9"
 tag_aliases=""
@@ -151,6 +151,11 @@ if [ "${vm}" == "openj9" ] && [ -f openj9_shasums_latest.sh ]; then
 	source ./openj9_shasums_latest.sh
 	available_jvms="${available_jvms} openj9"
 fi
+if [ "${vm}" != "hotspot" ] && [ "${vm}" != "openj9" ] && [ -f "${vm}_shasums_latest.sh" ]; then
+	# shellcheck disable=SC1091
+	source ./"${vm}"_shasums_latest.sh
+	available_jvms="${available_jvms} ${vm}"
+fi
 
 # Go through each vm / os / build / type combination and build the manifest commands
 # vm    = hotspot / openj9
@@ -177,9 +182,14 @@ do
 		fi
 		# Docker image tags cannot have "+" in them, replace it with "_" instead.
 		rel=${jrel//+/_}
+		if [ "${vm}" == "dragonwell" ]; then
+			rel=$(echo $rel | sed 's/^dragonwell[-_]\([0-9.]\+\+\).\+$/\1/')
+		fi
 
 		srepo=${source_repo}${version}
-		if [ "${vm}" != "hotspot" ]; then
+		if [ "${vm}" == "dragonwell" ]; then
+			srepo=${source_repo//openjdk/}${vm}${version}
+		elif [ "${vm}" != "hotspot" ]; then
 			srepo=${srepo}-${vm}
 		fi
 		for btype in ${btypes}

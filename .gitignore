@@ -9,3 +9,11 @@ push_commands.sh
 adoptopenjdk
 *hotspot.txt
 *openj9.txt
+*.tmp
+*.log
+*.pid
+
+# dragonwell
+*dragonwell.txt
+!dragonwell_shasums_latest.sh
+!dragonwell_build_time_latest.sh

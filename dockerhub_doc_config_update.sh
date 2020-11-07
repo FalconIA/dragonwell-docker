@@ -33,7 +33,7 @@ hotspot_latest_tags="hotspot, latest"
 # shellcheck disable=SC2034 # used externally
 openj9_latest_tags="openj9"
 
-git_repo="https://github.com/AdoptOpenJDK/openjdk-docker/blob/master"
+git_repo="https://github.com/FalconIA/dragonwell-docker/blob/master"
 
 # Get the latest git commit of the current repo.
 # This is assumed to have all the latest dockerfiles already.
@@ -62,86 +62,111 @@ function generate_unofficial_image_info() {
 	# Replace "+" with "_" in the version info as docker does not support "+"
 	full_version=${full_version//+/_}
 
-	# Build a list of super tags (in addition to the non arch specific tags)
-	super_tags="";
-	case ${os} in
-	ubuntu)
-		attrs=""
-		# JRE ubuntu builds have a `jre` tag
-		if [ "${pkg}" == "jre" ]; then
-			super_tags="${pkg}";
-			full_version=${full_version//jdk/jre}
-		fi
-		# Nightly ubuntu builds have a `nightly` tag
-		if [ "${build}" == "nightly" ]; then
-			if [ "${super_tags}" == "" ]; then
-				super_tags="${build}";
-			else
-				super_tags="${super_tags}-${build}"
-			fi
-			attrs="${build}"
-		fi
-		# Slim ubuntu builds have a `slim` tag
-		if [ "${btype}" == "slim" ]; then
-			if [ "${super_tags}" == "" ]; then
-				super_tags="${btype}"
-			else
-				super_tags="${super_tags}-${btype}"
-			fi
-			if [ "${attrs}" == "" ]; then
-				attrs="${btype}"
-			else
-				attrs="${attrs}-${btype}"
-			fi
-		fi
-		# If none of the above, it has to be the `latest` build
-		if [ "${super_tags}" == "" ]; then
-			super_tags="latest";
-			super_tags="${super_tags} ${full_version}";
-		# jre only builds only use the jre version tag
-		elif [[ "${super_tags}" != *"nightly"*  && "${super_tags}" != *"slim"* ]]; then
-			super_tags="${super_tags} ${full_version}";
-		# jre nightly will have the attrs added
-		elif [[ "${super_tags}" == *"jre"* ]]; then
-			super_tags="${super_tags} ${full_version}-${attrs}";
-		# nightly / slim / nightly-slim
-		else
-			super_tags="${super_tags} ${full_version}-${super_tags}";
-		fi
-		if [ "${attrs}" == "" ]; then
-			vattrs="${full_version}"
-		fi
-		;;
-	*)
-		# Non Ubuntu builds all have the `$os` tag prepended
-		super_tags="${os}";
-		attrs=""
-		if [ "${pkg}" == "jre" ]; then
-			super_tags="${super_tags}-${pkg}";
-			full_version=${full_version//jdk/jre}
-		fi
-		if [ "${build}" == "nightly" ]; then
-			super_tags="${super_tags}-${build}";
-			attrs="${build}"
-		fi
-		if [ "${btype}" == "slim" ]; then
-			super_tags="${super_tags}-${btype}"
-			if [ "${attrs}" == "" ]; then
-				attrs="${btype}"
-			else
-				attrs="${attrs}-${btype}"
-			fi
-		fi
-		if [ "${attrs}" == "" ]; then
-			super_tags="${super_tags} ${full_version}-${os}"
-			vattrs="${full_version}"
-		fi
-		;;
-	esac
-	if [ -n "${attrs}" ]; then
-		super_tags="${super_tags} ${full_version}-${os}-${attrs}"
-		vattrs="${full_version}-${attrs}"
+	# # Build a list of super tags (in addition to the non arch specific tags)
+	# super_tags="";
+	# case ${os} in
+	# ubuntu)
+	# 	attrs=""
+	# 	# JRE ubuntu builds have a `jre` tag
+	# 	if [ "${pkg}" == "jre" ]; then
+	# 		super_tags="${pkg}";
+	# 		full_version=${full_version//jdk/jre}
+	# 	fi
+	# 	# Nightly ubuntu builds have a `nightly` tag
+	# 	if [ "${build}" == "nightly" ]; then
+	# 		if [ "${super_tags}" == "" ]; then
+	# 			super_tags="${build}";
+	# 		else
+	# 			super_tags="${super_tags}-${build}"
+	# 		fi
+	# 		attrs="${build}"
+	# 	fi
+	# 	# Slim ubuntu builds have a `slim` tag
+	# 	if [ "${btype}" == "slim" ]; then
+	# 		if [ "${super_tags}" == "" ]; then
+	# 			super_tags="${btype}"
+	# 		else
+	# 			super_tags="${super_tags}-${btype}"
+	# 		fi
+	# 		if [ "${attrs}" == "" ]; then
+	# 			attrs="${btype}"
+	# 		else
+	# 			attrs="${attrs}-${btype}"
+	# 		fi
+	# 	fi
+	# 	# If none of the above, it has to be the `latest` build
+	# 	if [ "${super_tags}" == "" ]; then
+	# 		super_tags="latest";
+	# 		super_tags="${super_tags} ${full_version} ${os}";
+	# 	# jre only builds only use the jre version tag
+	# 	elif [[ "${super_tags}" != *"nightly"*  && "${super_tags}" != *"slim"* ]]; then
+	# 		super_tags="${super_tags} ${full_version} ${os}";
+	# 	# jre nightly will have the attrs added
+	# 	elif [[ "${super_tags}" == *"jre"* ]]; then
+	# 		super_tags="${super_tags} ${full_version}-${attrs} ${os}-${attrs}";
+	# 	# nightly / slim / nightly-slim
+	# 	else
+	# 		super_tags="${super_tags} ${full_version}-${super_tags} ${os}-${super_tags}";
+	# 	fi
+	# 	if [ "${attrs}" == "" ]; then
+	# 		super_tags="${super_tags} ${full_version}-${os}"
+	# 		vattrs="${full_version}"
+	# 	fi
+	# 	;;
+	# *)
+	# 	# Non Ubuntu builds all have the `$os` tag prepended
+	# 	super_tags="${os}";
+	# 	attrs=""
+	# 	if [ "${pkg}" == "jre" ]; then
+	# 		super_tags="${super_tags}-${pkg}";
+	# 		full_version=${full_version//jdk/jre}
+	# 	fi
+	# 	if [ "${build}" == "nightly" ]; then
+	# 		super_tags="${super_tags}-${build}";
+	# 		attrs="${build}"
+	# 	fi
+	# 	if [ "${btype}" == "slim" ]; then
+	# 		super_tags="${super_tags}-${btype}"
+	# 		if [ "${attrs}" == "" ]; then
+	# 			attrs="${btype}"
+	# 		else
+	# 			attrs="${attrs}-${btype}"
+	# 		fi
+	# 	fi
+	# 	if [ "${attrs}" == "" ]; then
+	# 		super_tags="${super_tags} ${full_version}-${os}"
+	# 		vattrs="${full_version}"
+	# 	fi
+	# 	;;
+	# esac
+	# if [ -n "${attrs}" ]; then
+	# 	super_tags="${super_tags} ${full_version}-${os}-${attrs}"
+	# 	vattrs="${full_version}-${attrs}"
+	# fi
+
+	attrs=""
+	if [ "${vm}" == "dragonwell" ]; then
+		full_version=$(echo $full_version | sed 's/^dragonwell[-_]\([0-9.]\+\+\).\+$/\1/')
+	elif [ "${pkg}" == "jre" ]; then
+		full_version=${full_version//jdk/jre}
 	fi
+	if [ "${build}" == "nightly" ]; then
+		attrs="${build}"
+	fi
+	if [ "${btype}" == "slim" ]; then
+		if [ "${attrs}" == "" ]; then
+			attrs="${btype}"
+		else
+			attrs="${attrs}-${btype}"
+		fi
+	fi
+	if [ "${attrs}" == "" ]; then
+		vattrs="${full_version}"
+	fi
+
+	raw_tags=$(parse_tag_entry "${os}" "${package}" "${build}" "${btype}")
+	build_tags "${vm}" "${ver}" "${package}" "${full_version}" "${os}" "${build}" "${raw_tags}"
+	super_tags=${tag_aliases}
 
 	# Unofficial images support x86_64, aarch64, s390x and ppc64le
 	# Remove ppc64el, amd64 and arm64
@@ -291,6 +316,10 @@ function generate_official_image_info() {
 # Official docker images = https://hub.docker.com/_/adoptopenjdk
 for vm in ${all_jvms}
 do
+	if [ "${vm}" == "dragonwell" ]; then
+		continue;
+	fi
+
 	# Official images support different versions
 	official_supported_versions="8 11 13 14 15"
 	for ver in ${official_supported_versions}
@@ -320,7 +349,7 @@ do
 done
 
 # This loop generated the documentation for the unofficial docker images
-# Unofficial docker images = https://hub.docker.com/r/adoptopenjdk
+# Unofficial docker images = https://hub.docker.com/r/falconia
 for vm in ${all_jvms}
 do
 	for ver in ${supported_versions}
@@ -331,20 +360,26 @@ do
 		do
 			if [ "${build}" == "releases" ]; then
 				echo "**Release Builds**" >> "${ver}"_"${vm}".txt
+				echo >> "${ver}"_"${vm}".txt
 			else
 				echo "**Nightly Builds**" >> "${ver}"_"${vm}".txt
+				echo >> "${ver}"_"${vm}".txt
 			fi
 			for os in ${oses}
 			do
+				has_file=false
 				for pkg in ${all_packages}
 				do
 					for file in $(find . -name "Dockerfile.*" | grep "/${ver}" | grep "${vm}" | grep "${build}" | grep "/${os}/" | grep "${pkg}")
 					do
+						if [ "${has_file}" == "false" ]; then
+							has_file=true
+						fi
 						echo -n "- [" >> "${ver}"_"${vm}".txt
 						dfname=$(basename "${file}")
 						# dockerfile dir
 						dfdir=$(dirname "${file}" | cut -c 3-)
-						pkg=$(echo "${file}" | awk -F '/' '{ print $3 }')
+						package=$(echo "${file}" | awk -F '/' '{ print $3 }')
 						os=$(echo "${file}" | awk -F '/' '{ print $4 }')
 						# build = release or nightly
 						build=$(echo "${dfname}" | awk -F "." '{ print $3 }')
@@ -354,7 +389,9 @@ do
 						generate_unofficial_image_info
 					done
 				done
-				echo >> "${ver}"_"${vm}".txt
+				if [ "${has_file}" == "true" ]; then
+					echo >> "${ver}"_"${vm}".txt
+				fi
 			done
 			echo >> "${ver}"_"${vm}".txt
 		done

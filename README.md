@@ -1,20 +1,11 @@
-[![Build Status](https://travis-ci.com/AdoptOpenJDK/openjdk-docker.svg?branch=master)](https://travis-ci.com/AdoptOpenJDK/openjdk-docker) [![Build status](https://ci.appveyor.com/api/projects/status/mlgtt6ndfb38y6ns/branch/master?svg=true)](https://ci.appveyor.com/project/gdams/openjdk-docker-k2x5l/branch/master)
-
-# AdoptOpenJDK and Docker
-Dockerfiles and build scripts for generating Docker Images based on various AdoptOpenJDK binaries. We support both Hotspot and Eclipse OpenJ9 VMs.
+# Dragonwell and Docker
+Dockerfiles and build scripts for generating Docker Images based on Alibaba Dragonwell binaries.
 
 # Supported Architectures
-* Hotspot is supported on ```armv7l```, ```aarch64```, ```ppc64le```, ```s390x``` and ```x86_64```.
-* Eclipse OpenJ9 is supported on ```ppc64le```, ```s390x``` and ```x86_64```.
+* Dragonwell is supported on ```Linux/x86_64``` only.
 
-# Official and Unofficial Images
-AdoptOpenJDK Docker Images are available as both Official Images (Maintained by Docker) and Unofficial Images (Maintained by AdoptOpenJDK). Please choose based on your requirements.
-* [Official Images](https://hub.docker.com/_/adoptopenjdk) are maintained by Docker and updated on every release from AdoptOpenJDK as well as when the underlying OSes are updated. Supported OSes and their versions and type of images are as below.
-  - Linux
-    - Ubuntu (20.04): Release
-  - Windows
-    - Windows Server Core (ltsc2016 and 1809): Release
-* [Unofficial Images](https://hub.docker.com/u/adoptopenjdk) are maintained by AdoptOpenJDK and updated on a nightly basis. Supported OSes and their versions and type of images are as below.
+# Unofficial Images
+Dragonwell Unofficial Images (Maintained by FalconIA).
   - Linux
     - Alpine (3.12): Release, Nightly and Slim
     - Debian (Buster): Release, Nightly and Slim
@@ -86,10 +77,10 @@ AdoptOpenJDK Docker Images are available as both Official Images (Maintained by 
 
 **Here is a listing of the image sizes for the various build images and types for JDK Version 8**
 
-| VMs  | latest | slim | nightly | nightly-slim | alpine | alpine-slim | alpine-nightly | alpine-nightly-slim |
-|:----:|:------:|:----:|:-------:|:------------:|:------:|:-----------:|:--------------:|:-------------------:|
-|OpenJ9| 339MB  | 251MB|  344MB  |    250MB     | 208MB  |    120MB    |     213MB      |       118MB         |
-|Hotspot| 324MB | 238MB|  324MB  |    238MB     | 193MB  |    106MB    |     193MB      |       106MB         |
+| VMs        | latest | slim | alpine | alpine-slim |
+|:----------:|:------:|:----:|:------:|:-----------:|
+|Dragonwell8 | 267MB  | 226MB| 171MB  | 116MB       |
+|Dragonwell11| 432MB  | 367MB| 336MB  | 256MB       |
 
 **Notes:**
 1. The alpine-slim images are about 60% smaller than the latest images.
@@ -102,10 +93,10 @@ AdoptOpenJDK Docker Images are available as both Official Images (Maintained by 
 # i.e aarch64, ppc64le, s390x and x86_64.
 
 # 1. Clone this github repo
-     $ git clone https://github.com/AdoptOpenJDK/openjdk-docker
+     $ git clone https://github.com/FalconIA/dragonwell-docker
 
 # 2. Build images and tag them appropriately
-     $ cd openjdk-docker
+     $ cd dragonwell-docker
      $ ./build_all.sh
 
 # Steps 3 needs to be run only on x86_64
@@ -141,21 +132,13 @@ AdoptOpenJDK Docker Images are available as both Official Images (Maintained by 
    ```
 #### Helper Scripts
 
- - Run [generate_latest_sums.sh](/generate_latest_sums.sh) to get the shasums for the latest binaries on adoptopenjdk.net
-   ```
-    $ ./generate_latest_sums.sh $version
-   ```
-   You should now have two files, `hotspot_shasums_latest.sh` and `openj9_shasums_latest.sh`. These will have the shasums for the latest version for each of the supported arches for hotspot and Eclipse OpenJ9 respectively.
  - [slim-java.sh](/slim-java.sh): Script that is used to generate the slim docker images. This script strips out various aspects of the JDK that are typically not needed in a server side containerized application. This includes debug info, symbols, classes related to audio, desktop etc
- - [dockerhub_doc_config_update.sh](/dockerhub_doc_config_update.sh): Script that generates the tag documentation for each of the unofficial AdoptOpenJDK pages on hub.docker.com and the config file for raising a PR at the Official AdoptOpenJDK git repo.
+ - [dockerhub_doc_config_update.sh](/dockerhub_doc_config_update.sh): Script that generates the tag documentation for each of the unofficial docker image pages on hub.docker.com.
 
 #### Config Files
 
 The [config](/config/) dir consists of configuration files used by the scripts to determine the supported combinations of Version / OS / VM / Package / Build types and Architectures for both Official/Unofficial images as well as the corresponding tags.
-- [hotspot.config](/config/hotspot.config): Configuration for unofficial images for HotSpot.
-- [hotspot-official.config](/config/hotspot-official.config): Configuration for official images for HotSpot.
-- [openj9.config](/config/openj9.config): Configuration for unofficial images for Eclipse OpenJ9.
-- [openj9-official.config](/config/openj9-official.config): Configuration for official images for Eclipse OpenJ9.
+- [dragonwell.config](/config/dragonwell.config): Configuration for unofficial images for Dragonwell.
 - [tags.config](/config/tags.config): Configuration for creating tags.
 
 ## Mac OS X

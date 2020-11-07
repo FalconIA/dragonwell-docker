@@ -19,6 +19,8 @@ tags_config_file="config/tags.config"
 openj9_config_file="config/openj9.config"
 # shellcheck disable=SC2034
 hotspot_config_file="config/hotspot.config"
+# shellcheck disable=SC2034
+dragonwell_config_file="config/dragonwell.config"
 
 # Test lists
 # shellcheck disable=SC2034
@@ -30,14 +32,16 @@ test_buckets_file="config/test_buckets.list"
 
 # All supported JVMs
 # shellcheck disable=SC2034 # used externally
-all_jvms="hotspot openj9"
+# all_jvms="hotspot openj9"
+all_jvms="dragonwell"
 
 # All supported arches
 all_arches="aarch64 armv7l ppc64le s390x x86_64 windows-amd windows-nano"
 
 # All supported packages
 # shellcheck disable=SC2034 # used externally
-all_packages="jdk jre"
+# all_packages="jdk jre"
+all_packages="jdk"
 
 # All supported runtypes
 # shellcheck disable=SC2034 # used externally
@@ -52,11 +56,14 @@ PR_TEST_OSES="ubuntu alpine ubi"
 runtype="build"
 
 # Current JVM versions supported
-export supported_versions="8 11 14 15"
-export latest_version="15"
+# export supported_versions="8 11 14 15"
+# export latest_version="15"
+export supported_versions="8 11"
+export latest_version="8"
 
 # Current builds supported
-export supported_builds="releases nightly"
+# export supported_builds="releases nightly"
+export supported_builds="releases"
 
 function check_version() {
 	version=$1
@@ -162,7 +169,7 @@ function get_arches() {
 	# corresponding build combination does not exist.
 	# Eg. jdk_openj9_10_releases_sums does not exist as we do not have any
 	# release builds for version 10 (Only nightly builds).
-	if ! declare -p "$1" 2>/dev/null; then
+	if ! declare -p "$1" 2>/dev/null 1>&2; then
 		return;
 	fi
 	archsums="$(declare -p "$1")";
@@ -170,6 +177,9 @@ function get_arches() {
 	for arch in "${!sums[@]}";
 	do
 		if [[ "${arch}" == version* ]] ; then
+			continue;
+		fi
+		if [[ "${arch}" == url* ]] ; then
 			continue;
 		fi
 		# Arch is supported only if the shasum is not empty !
@@ -204,7 +214,7 @@ function cleanup_images() {
 	docker container prune -f 2>/dev/null
 
 	# Delete any old images for our target_repo on localhost.
-	for image in $(docker images | grep -e 'adoptopenjdk' | awk -v OFS=':' '{ print $1, $2 }');
+	for image in $(docker images | grep -e 'falconia/dragonwell' | awk -v OFS=':' '{ print $1, $2 }');
 	do
 		docker rmi -f "${image}";
 	done
@@ -299,7 +309,7 @@ function build_tags() {
 	# Get the list of supported arches for this vm / ver /os combo
 	arches=$(parse_vm_entry "${vm}" "${ver}" "${pkg}" "${os}" "Architectures:")
 	# Replace the proper version string in the tags
-	rtags=$(echo "${rawtags}" | sed "s/{{ JDK_${build}_VER }}/${rel}/gI; s/{{ OS }}/${os}/gI;");
+	rtags=$(echo "${rawtags}" | sed "s/{{ JDK_${build}_VER }}/${rel}/gI; s/{{ OS }}/${os}/gI; s/{{ JDK_MAJOR_VER }}/${ver}/gI;");
 	echo "${rtags}" | sed "s/{{ *ARCH *}}/{{ARCH}}/" |
 	# Separate the arch and the generic alias tags
 	awk '{ a=0; n=0;
@@ -634,13 +644,32 @@ function get_shasums() {
 	if [ -f "${ofile_sums}" ]; then
 		# shellcheck disable=SC1090
 		source ./"${vm}"_shasums_latest.sh
-		sums="${pkg}_${vm}_${ver}_${build}_sums"
-		# File exists, which means shasums for the VM exists.
-		# Now check for the specific Ver/VM/Pg/Build combo
-		suparches=$(get_arches "${sums}")
-		if [ -n "${suparches}" ]; then
-			return;
+		
+		if [ -n "${build}" ]; then
+			sums="${pkg}_${vm}_${ver}_${build}_sums"
+			# File exists, which means shasums for the VM exists.
+			# Now check for the specific Ver/VM/Pg/Build combo
+			suparches=$(get_arches "${sums}")
+			if [ -n "${suparches}" ]; then
+				return;
+			fi
+		else
+			success=true
+			for build in ${supported_builds}
+			do
+				sums="${pkg}_${vm}_${ver}_${build}_sums"
+				# File exists, which means shasums for the VM exists.
+				# Now check for the specific Ver/VM/Pg/Build combo
+				suparches=$(get_arches "${sums}")
+				if [ ! -n "${suparches}" ]; then
+					success=false;
+				fi
+			done
+			if [ "${success}" == "true" ]; then
+				return;
+			fi
 		fi
+
 	fi
 
 	if [ -n "${build}" ]; then

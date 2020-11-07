@@ -172,6 +172,8 @@ print_lang_locale() {
 # Select the ubuntu OS packages
 print_ubuntu_pkg() {
 	cat >> "$1" <<'EOI'
+RUN sed -i 's/http:\/\/\(\(archive\|security\)\.ubuntu\.com\|\(deb\|security\)\.debian\.org\)\//http:\/\/mirrors.aliyun.com\//g' /etc/apt/sources.list
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tzdata curl ca-certificates fontconfig locales \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
@@ -208,6 +210,8 @@ EOI
 # Install GNU glibc as this OpenJDK build is compiled against glibc and not musl.
 print_alpine_pkg() {
 	cat >> "$1" <<'EOI'	
+RUN sed -i 's/http:\/\/dl-cdn\.alpinelinux\.org\//http:\/\/mirrors.aliyun.com\//g' /etc/apk/repositories
+
 RUN set -eux \
     && apk add --no-cache tzdata --virtual .build-deps curl binutils zstd \
     && GLIBC_VER="2.31-r0" \
@@ -219,22 +223,22 @@ RUN set -eux \
     && curl -LfsS https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub \
     && SGERRAND_RSA_SHA256="823b54589c93b02497f1ba4dc622eaef9c813e6b0f0ebbb2f771e32adf9f4ef2" \
     && echo "${SGERRAND_RSA_SHA256} */etc/apk/keys/sgerrand.rsa.pub" | sha256sum -c - \
-    && curl -Lf#S ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk -o /tmp/glibc-${GLIBC_VER}.apk \
+    && curl -Lf#S --retry 10 --retry-max-time 0 --retry-connrefused ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-${GLIBC_VER}.apk -o /tmp/glibc-${GLIBC_VER}.apk \
     && apk add --no-cache /tmp/glibc-${GLIBC_VER}.apk \
-    && curl -Lf#S ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-bin-${GLIBC_VER}.apk -o /tmp/glibc-bin-${GLIBC_VER}.apk \
+    && curl -Lf#S --retry 10 --retry-max-time 0 --retry-connrefused ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-bin-${GLIBC_VER}.apk -o /tmp/glibc-bin-${GLIBC_VER}.apk \
     && apk add --no-cache /tmp/glibc-bin-${GLIBC_VER}.apk \
-    && curl -Lf#S ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-i18n-${GLIBC_VER}.apk -o /tmp/glibc-i18n-${GLIBC_VER}.apk \
+    && curl -Lf#S --retry 10 --retry-max-time 0 --retry-connrefused ${ALPINE_GLIBC_REPO}/${GLIBC_VER}/glibc-i18n-${GLIBC_VER}.apk -o /tmp/glibc-i18n-${GLIBC_VER}.apk \
     && apk add --no-cache /tmp/glibc-i18n-${GLIBC_VER}.apk \
     && (/usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 "$LANG" || true) \
     && echo "export LANG=$LANG" > /etc/profile.d/locale.sh \
-    && curl -Lf#S ${GCC_LIBS_URL} -o /tmp/gcc-libs.tar.zst \
+    && curl -Lf#S --retry 10 --retry-max-time 0 --retry-connrefused ${GCC_LIBS_URL} -o /tmp/gcc-libs.tar.zst \
     && echo "${GCC_LIBS_SHA256} */tmp/gcc-libs.tar.zst" | sha256sum -c - \
     && mkdir /tmp/gcc \
     && zstd -d /tmp/gcc-libs.tar.zst --output-dir-flat /tmp \
     && tar -xf /tmp/gcc-libs.tar -C /tmp/gcc \
     && mv /tmp/gcc/usr/lib/libgcc* /tmp/gcc/usr/lib/libstdc++* /usr/glibc-compat/lib \
     && strip /usr/glibc-compat/lib/libgcc_s.so.* /usr/glibc-compat/lib/libstdc++.so* \
-    && curl -Lf#S ${ZLIB_URL} -o /tmp/libz.tar.xz \
+    && curl -Lf#S --retry 10 --retry-max-time 0 --retry-connrefused ${ZLIB_URL} -o /tmp/libz.tar.xz \
     && echo "${ZLIB_SHA256} */tmp/libz.tar.xz" | sha256sum -c - \
     && mkdir /tmp/libz \
     && tar -xf /tmp/libz.tar.xz -C /tmp/libz \
@@ -264,6 +268,8 @@ EOI
 # Select the CentOS packages.
 print_centos_pkg() {
 	cat >> "$1" <<'EOI'
+RUN curl -LfsS https://mirrors.aliyun.com/repo/Centos-7.repo | sed -e '/mirrors.cloud.aliyuncs.com/d' -e '/mirrors.aliyuncs.com/d' > /etc/yum.repos.d/CentOS-Base.repo
+
 RUN yum install -y tzdata openssl curl ca-certificates fontconfig gzip tar \
     && yum update -y; yum clean all
 EOI
@@ -277,6 +283,12 @@ print_clefos_pkg() {
 # Select the Leap packages.
 print_leap_pkg() {
 	cat >> "$1" <<'EOI'
+RUN zypper mr -da \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/distribution/leap/15.2/repo/oss      repo-aliyun-oss \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/distribution/leap/15.2/repo/non-oss  repo-aliyun-non-oss \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/update/leap/15.2/oss                 repo-aliyun-oss-update \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/update/leap/15.2/non-oss             repo-aliyun-non-oss-update
+
 RUN zypper install --no-recommends -y timezone openssl curl ca-certificates fontconfig gzip tar \
     && zypper update -y; zypper clean --all
 EOI
@@ -284,7 +296,14 @@ EOI
 
 # Select the Tumbleweed packages.
 print_tumbleweed_pkg() {
-  print_leap_pkg "$1"
+	cat >> "$1" <<'EOI'
+RUN zypper mr -da \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/tumbleweed/repo/oss      repo-aliyun-oss \
+	&& zypper ar -fc http://mirrors.aliyun.com/opensuse/tumbleweed/repo/non-oss  repo-aliyun-non-oss
+
+RUN zypper install --no-recommends -y timezone openssl curl ca-certificates fontconfig gzip tar \
+    && zypper update -y; zypper clean --all
+EOI
 }
 
 # Print the Java version that is being installed here

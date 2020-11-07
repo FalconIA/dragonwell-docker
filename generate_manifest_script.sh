@@ -15,7 +15,7 @@
 set -o pipefail
 
 root_dir="$PWD"
-source_prefix="adoptopenjdk"
+source_prefix="falconia"
 source_repo="openjdk"
 version="9"
 tag_aliases=""
@@ -104,7 +104,7 @@ function print_tags() {
 check_manifest_tool
 
 # Set the OSes that we will be generating manifests for
-oses="alpine centos clefos debian debianslim ubi ubi-minimal ubuntu"
+oses="alpine centos clefos debian debianslim ubi ubi-minimal ubuntu leap tumbleweed"
 os_family="linux"
 
 # Which JVMs are available for the current version
@@ -121,6 +121,11 @@ if [ "${vm}" == "openj9" ] && [ -f openj9_shasums_latest.sh ]; then
  # shellcheck disable=SC1091
 	source ./openj9_shasums_latest.sh
 	available_jvms="${available_jvms} openj9"
+fi
+if [ "${vm}" != "hotspot" ] && [ "${vm}" != "openj9" ] && [ -f "${vm}_shasums_latest.sh" ]; then
+	# shellcheck disable=SC1091
+	source ./"${vm}"_shasums_latest.sh
+	available_jvms="${available_jvms} ${vm}"
 fi
 
 
@@ -156,9 +161,14 @@ do
 		fi
 		# Docker image tags cannot have "+" in them, replace it with "_" instead.
 		rel=${jrel//+/_}
+		if [ "${vm}" == "dragonwell" ]; then
+			rel=$(echo $rel | sed 's/^dragonwell[-_]\([0-9.]\+\+\).\+$/\1/')
+		fi
 
 		srepo=${source_repo}${version}
-		if [ "${vm}" != "hotspot" ]; then
+		if [ "${vm}" == "dragonwell" ]; then
+			srepo=${source_repo//openjdk/}${vm}${version}
+		elif [ "${vm}" != "hotspot" ]; then
 			srepo=${srepo}-${vm}
 		fi
 		for btype in ${btypes}

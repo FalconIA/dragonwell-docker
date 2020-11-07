@@ -51,7 +51,7 @@ do
 				echo "###############################################################"
 			fi
 			echo
-			echo "WARNING: Pushing to AdoptOpenJDK repo on hub.docker.com"
+			echo "WARNING: Pushing to repo on hub.docker.com"
 			echo "WARNING: If you did not intend this, quit now. (Sleep 5)"
 			echo
 			sleep 5
