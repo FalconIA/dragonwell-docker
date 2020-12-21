@@ -107,7 +107,7 @@ EOF
 	for ssum in ${base_os_sha_arr}
 	do
 		if ! echo "${adopt_sha_arr}" | grep -q "${ssum}" ; then
-			echo "Base OS layer ${ssum} not found in Adopt Image: ${tag}"
+			echo "Base OS layer ${ssum} not found in Image: ${tag}"
 			# Layer missing in the current Adopt Image, rebuild needed
 			build_needed=1
 			break;
@@ -140,7 +140,7 @@ function check_new_adopt_build_available() {
 	echo "INFO: Current adopt build tarball related to ${tag} build date: $(date --date="@${adopt_last_build_date}")"
 	if [[ ${adopt_image_creation_date} -le ${adopt_last_build_date} ]]; then
 		# build needed
-		echo "INFO: Newer adopt build found. Docker build needed"
+		echo "INFO: Newer build found. Docker build needed"
 		build_needed=1
 		return;
 	fi
