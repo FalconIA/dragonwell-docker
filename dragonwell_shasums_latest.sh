@@ -4,6 +4,12 @@ declare -A jdk_dragonwell_8_releases_sums=(
 	[x86_64]="d54eaeb5362dfe8a94b3c9b464c99ca04c1a80aa1ad39539b44e08e4858671f6"
 	[url-binary-x86_64]="https://github.com/alibaba/dragonwell8/releases/download/dragonwell-8.4.4_jdk8u262-ga/Alibaba_Dragonwell_8.4.4-GA_Linux_x64.tar.gz"
 )
+declare -A jdk_dragonwell_8_releases_sums=(
+	[version]="dragonwell-8.5.4_jdk8u272-ga"
+	[version-x86_64]="8.5.4"
+	[x86_64]="14094bf3278aa3e6fe22b91f69fc3f29aa547ffaef0ec19cdce584b86a1a864a"
+	[url-binary-x86_64]="https://github.com/alibaba/dragonwell8/releases/download/dragonwell-8.5.4_jdk8u272-ga/Alibaba_Dragonwell_8.5.4-GA_Linux_x64.tar.gz"
+)
 declare -A jdk_dragonwell_11_releases_sums=(
 	[version]="dragonwell_11.0.7.2_jdk-11.0.7-ga"
 	[version-x86_64]="11.0.7.2"
